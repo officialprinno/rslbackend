@@ -56,7 +56,7 @@ ALLOWED_HOSTS = env_list(
 
 INSTALLED_APPS = [
     "daphne",
-    "jazzmin",
+    #"jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
