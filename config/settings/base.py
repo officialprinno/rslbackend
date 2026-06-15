@@ -41,12 +41,12 @@ SECRET_KEY = env(
     default="django-insecure-$ep9)(n&9t4s=rxqrmwxprfctpv36x&&l+4qs7^_q58++xy55(",
 )
 
-DEBUG = env_bool("DEBUG", "DJANGO_DEBUG", default=True)
+DEBUG = env_bool("DEBUG", "DJANGO_DEBUG", default=False)
 
 ALLOWED_HOSTS = env_list(
     "DJANGO_ALLOWED_HOSTS",
     "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1",
+    default="localhost,127.0.0.1,rslbackend-production.up.railway.app",
 )
 
 INSTALLED_APPS = [
@@ -157,7 +157,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CORS
 CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:4200,http://127.0.0.1:4200",
+    default="http://localhost:4200,http://127.0.0.1:4200,http://rslbackend-production.up.railway.app",
 )
 CORS_ALLOW_CREDENTIALS = True
 
