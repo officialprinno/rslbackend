@@ -1,6 +1,7 @@
 """Demo / seed accounts used across management commands."""
 
 from apps.users.models import Department, Permission, Role, User
+from apps.users.password_utils import apply_user_password
 
 DEMO_DRIVER_EMAIL = "driver@rocksolutions.co.tz"
 DEMO_DRIVER_PASSWORD = "Driver@2024"
@@ -63,8 +64,7 @@ def ensure_demo_driver_user(*, reset_password: bool = True) -> User:
         user.save(update_fields=list(updates.keys()))
 
     if reset_password or created or not user.has_usable_password():
-        user.set_password(DEMO_DRIVER_PASSWORD)
-        user.save(update_fields=["password"])
+        apply_user_password(user, DEMO_DRIVER_PASSWORD)
 
     return user
 
@@ -126,8 +126,7 @@ def ensure_demo_gm_user(
         ensure_gm_role_permissions(gm_role)
 
     if reset_password or created or not user.has_usable_password():
-        user.set_password(password)
-        user.save(update_fields=["password"])
+        apply_user_password(user, password)
 
     return user
 
@@ -200,7 +199,6 @@ def ensure_demo_storekeeper_user(
         )
 
     if reset_password or created or not user.has_usable_password():
-        user.set_password(password)
-        user.save(update_fields=["password"])
+        apply_user_password(user, password)
 
     return user

@@ -21,6 +21,7 @@ from apps.users.demo_accounts import (
     ensure_demo_storekeeper_user,
     ensure_gm_role_permissions,
 )
+from apps.users.password_utils import apply_user_password
 from apps.users.models import Department, Permission, Role, User
 
 DEPARTMENTS = [
@@ -333,8 +334,7 @@ class Command(BaseCommand):
             },
         )
         if created or options.get("password"):
-            user.set_password(options["password"])
-            user.save()
+            apply_user_password(user, options["password"])
 
         grant_employee_universal_permissions()
         self.stdout.write(self.style.SUCCESS("  Employee modules: messaging, email, settings → all roles"))

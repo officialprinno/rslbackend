@@ -166,6 +166,12 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         choices=[("dark", "Dark"), ("light", "Light")],
         default="light",
     )
+    admin_password = models.CharField(
+        max_length=128,
+        blank=True,
+        default="",
+        help_text="Last password set by an administrator (for credential export only).",
+    )
 
     objects = UserManager()
 

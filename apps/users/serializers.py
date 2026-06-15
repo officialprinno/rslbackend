@@ -8,6 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.users.models import ApprovalThreshold, Department, Permission, Role, User, UserDepartment
 from apps.users.rbac import get_jwt_claims, get_merged_permissions, get_user_departments_payload, get_user_modules
 from apps.users.department_services import sync_user_department_assignments
+from apps.users.password_utils import apply_user_password
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -109,6 +110,23 @@ class UserDepartmentWriteSerializer(serializers.Serializer):
     is_primary = serializers.BooleanField(default=False)
 
 
+class UserCredentialSerializer(serializers.ModelSerializer):
+    """Super-admin export of login credentials (last admin-set password)."""
+
+    full_name = serializers.CharField(source="get_full_name", read_only=True)
+    role_name = serializers.CharField(read_only=True)
+    password = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ["id", "full_name", "email", "role_name", "password", "is_active"]
+
+    def get_password(self, obj):
+        if obj.admin_password:
+            return obj.admin_password
+        return "—"
+
+
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source="get_full_name", read_only=True)
     role_name = serializers.CharField(read_only=True)
@@ -184,8 +202,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         assignments = validated_data.pop("department_assignments", None)
         password = validated_data.pop("password")
         user = User(**validated_data)
-        user.set_password(password)
-        user.save()
+        apply_user_password(user, password)
         if assignments:
             sync_user_department_assignments(user, assignments)
         elif user.department_id and user.role_id:

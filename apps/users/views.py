@@ -16,6 +16,7 @@ from apps.core.audit import get_client_ip, log_audit
 from apps.core.permissions import HasModulePermission, IsSuperAdmin
 from apps.core.responses import api_error, api_response
 from apps.users.models import ApprovalThreshold, Department, Permission, Role, User
+from apps.users.password_utils import apply_user_password, clear_admin_password_record
 from apps.users.serializers import (
     ApprovalThresholdSerializer,
     ChangePasswordSerializer,
@@ -24,6 +25,7 @@ from apps.users.serializers import (
     PermissionSerializer,
     RoleSerializer,
     UserCreateSerializer,
+    UserCredentialSerializer,
     UserSerializer,
     UserUpdateSerializer,
     get_tokens_for_user,
@@ -116,7 +118,8 @@ class ChangePasswordView(APIView):
         if not serializer.is_valid():
             return api_error(errors=serializer.errors)
         request.user.set_password(serializer.validated_data["new_password"])
-        request.user.save()
+        clear_admin_password_record(request.user)
+        request.user.save(update_fields=["password", "admin_password"])
         log_audit(
             user=request.user,
             module="auth",
@@ -399,7 +402,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_required_action(self):
         if self.action in ("create",):
             return "create"
-        if self.action in ("update", "partial_update", "reset_password"):
+        if self.action in ("update", "partial_update", "reset_password", "credentials"):
             return "update"
         if self.action == "destroy":
             return "delete"
@@ -474,9 +477,33 @@ class UserViewSet(viewsets.ModelViewSet):
             validate_password(password, user)
         except ValidationError as exc:
             return api_error(errors={"password": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
-        user.set_password(password)
-        user.save(update_fields=["password"])
+        apply_user_password(user, password)
+        log_audit(
+            user=request.user,
+            module="users",
+            action="reset_password",
+            record_id=user.id,
+            ip_address=get_client_ip(request),
+        )
         return api_response(message="Password reset successfully")
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="credentials",
+        permission_classes=[IsAuthenticated, IsSuperAdmin],
+    )
+    def credentials(self, request):
+        """List email + last admin-set password for all users (super admin only)."""
+        users = User.objects.select_related("role").order_by("last_name", "first_name")
+        data = UserCredentialSerializer(users, many=True).data
+        log_audit(
+            user=request.user,
+            module="users",
+            action="export_credentials",
+            ip_address=get_client_ip(request),
+        )
+        return api_response(data=data)
 
     @action(detail=False, methods=["get"], url_path="me/permissions")
     def my_permissions(self, request):
