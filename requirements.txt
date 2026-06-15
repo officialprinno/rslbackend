@@ -11,4 +11,9 @@ python-decouple>=3.8
 Pillow>=10.0
 channels>=4.0,<5.0
 daphne>=4.0,<5.0
-django-jazzmin 3.0.4
+django-jazzmin=3.0.4
+django-storages
+whitenoise
+cloudinary
+django-cloudinary-storage
+gunicorn
