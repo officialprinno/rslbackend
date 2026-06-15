@@ -4,6 +4,10 @@ Jazzmin admin theme configuration for Rock Solutions FMS.
 Docs: https://django-jazzmin.readthedocs.io/
 """
 
+import os
+
+_FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:4200").strip()
+
 JAZZMIN_SETTINGS = {
     "site_title": "Rock Solutions FMS",
     "site_header": "Rock Solutions FMS",
@@ -24,11 +28,11 @@ JAZZMIN_SETTINGS = {
     "user_avatar": None,
     "topmenu_links": [
         {"name": "FMS API", "url": "/api/v1/core/", "new_window": False},
-        {"name": "Frontend", "url": "http://localhost:4200", "new_window": True},
+        {"name": "Frontend", "url": _FRONTEND_URL, "new_window": True},
         {"model": "users.User"},
     ],
     "usermenu_links": [
-        {"name": "FMS Frontend", "url": "http://localhost:4200", "new_window": True},
+        {"name": "FMS Frontend", "url": _FRONTEND_URL, "new_window": True},
     ],
     "show_sidebar": True,
     "navigation_expanded": True,

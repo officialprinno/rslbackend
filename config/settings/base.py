@@ -1,16 +1,18 @@
 """
 Base settings for Rock Solutions FMS.
+Shared by development and production — override secrets and DEBUG per environment.
 """
 
 from datetime import timedelta
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Load backend/.env before reading any settings (works regardless of cwd).
+# Load backend/.env for local runs (Railway injects env vars directly).
 load_dotenv(BASE_DIR / ".env")
 
 
@@ -35,24 +37,12 @@ def env_list(key: str, *fallbacks: str, default: str = "") -> list[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
-SECRET_KEY = env(
-    "SECRET_KEY",
-    "DJANGO_SECRET_KEY",
-    default="django-insecure-$ep9)(n&9t4s=rxqrmwxprfctpv36x&&l+4qs7^_q58++xy55(",
-)
+# SECRET_KEY is set in development.py / production.py (never hardcoded here).
+SECRET_KEY = env("SECRET_KEY", "DJANGO_SECRET_KEY")
 
-DEBUG = env_bool("DEBUG", "DJANGO_DEBUG", default=True)
+DEBUG = env_bool("DEBUG", "DJANGO_DEBUG", default=False)
 
-_railway_domain = env("RAILWAY_PUBLIC_DOMAIN")
-_default_hosts = "localhost,127.0.0.1"
-if _railway_domain:
-    _default_hosts = f"{_default_hosts},{_railway_domain}"
-
-ALLOWED_HOSTS = env_list(
-    "DJANGO_ALLOWED_HOSTS",
-    "ALLOWED_HOSTS",
-    default=_default_hosts,
-)
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "ALLOWED_HOSTS")
 
 INSTALLED_APPS = [
     "daphne",
@@ -88,7 +78,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -119,25 +109,20 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 DATABASE_URL = env("DATABASE_URL")
+if not DATABASE_URL:
+    raise ImproperlyConfigured(
+        "DATABASE_URL is required. Set it in backend/.env locally or in Railway variables."
+    )
 
-# Railway (and most PaaS) inject DATABASE_URL — use it whenever present.
-if DATABASE_URL:
-    import dj_database_url
+import dj_database_url  # noqa: E402
 
-    DATABASES = {
-        "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600),
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": env("DB_ENGINE", default="django.db.backends.postgresql"),
-            "NAME": env("DB_NAME", default="rsl_db"),
-            "USER": env("DB_USER", default="postgres"),
-            "PASSWORD": env("DB_PASSWORD", default="Inno-997"),
-            "HOST": env("DB_HOST", default="localhost"),
-            "PORT": env("DB_PORT", default="5432"),
-        }
-    }
+DATABASES = {
+    "default": dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=True,
+    ),
+}
 
 AUTH_USER_MODEL = "users.User"
 
@@ -153,19 +138,16 @@ TIME_ZONE = "Africa/Dar_es_Salaam"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# CORS
-CORS_ALLOWED_ORIGINS = env_list(
-    "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:4200,http://127.0.0.1:4200,http://rslbackend-production.up.railway.app",
-)
+# CORS — set via environment (no hardcoded production domains).
+CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS")
 CORS_ALLOW_CREDENTIALS = True
 
 # Django REST Framework
@@ -203,7 +185,10 @@ VAT_RATE = 0.18
 NSSF_EMPLOYER_RATE = 0.10
 NSSF_EMPLOYEE_RATE = 0.10
 
-# Django Channels (in-memory layer for dev; use Redis in production)
+# Optional frontend URL for admin links (Jazzmin).
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:4200")
+
+# Django Channels (in-memory layer for dev; use Redis in production if needed)
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels.layers.InMemoryChannelLayer",

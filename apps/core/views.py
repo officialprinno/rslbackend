@@ -12,7 +12,7 @@ from apps.core.serializers import AuditLogSerializer, CurrencySerializer
 
 
 def health_check(_request):
-    """Lightweight liveness probe for Railway / load balancers."""
+    """Lightweight liveness probe for Railway / load balancers (always HTTP 200 when app is up)."""
     return JsonResponse({"status": "ok", "service": "rsl-fms-api"})
 
 

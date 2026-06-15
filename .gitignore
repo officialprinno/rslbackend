@@ -2,6 +2,9 @@
 .env
 .env.*
 !.env.example
+*.pem
+credentials.json
+secrets.json
 
 # ── Python ──────────────────────────────────────────────────
 __pycache__/
