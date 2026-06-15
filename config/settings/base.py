@@ -41,12 +41,12 @@ SECRET_KEY = env(
     default="django-insecure-$ep9)(n&9t4s=rxqrmwxprfctpv36x&&l+4qs7^_q58++xy55(",
 )
 
-DEBUG = env_bool("DEBUG", "DJANGO_DEBUG", default=False)
-
+#DEBUG = env_bool("DEBUG", "DJANGO_DEBUG", default=True)
+DEBUG = True
 ALLOWED_HOSTS = env_list(
     "DJANGO_ALLOWED_HOSTS",
     "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1,rslbackend-production.up.railway.app",
+    default="localhost,127.0.0.1,*,0.0.0.0,rslbackend-production.up.railway.app",
 )
 
 INSTALLED_APPS = [
