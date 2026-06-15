@@ -23,8 +23,8 @@ if not _hosts:
         )
 elif _railway_domain and _railway_domain not in _hosts and ".up.railway.app" not in _hosts:
     _hosts.append(_railway_domain)
-ALLOWED_HOSTS = _hosts  # noqa: F405
-
+#ALLOWED_HOSTS = _hosts  # noqa: F405
+ALLOWED_HOSTS = ["*"]
 # Railway terminates TLS at the edge — trust the proxy headers.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
