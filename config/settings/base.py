@@ -41,12 +41,17 @@ SECRET_KEY = env(
     default="django-insecure-$ep9)(n&9t4s=rxqrmwxprfctpv36x&&l+4qs7^_q58++xy55(",
 )
 
-#DEBUG = env_bool("DEBUG", "DJANGO_DEBUG", default=True)
-DEBUG = True
+DEBUG = env_bool("DEBUG", "DJANGO_DEBUG", default=True)
+
+_railway_domain = env("RAILWAY_PUBLIC_DOMAIN")
+_default_hosts = "localhost,127.0.0.1"
+if _railway_domain:
+    _default_hosts = f"{_default_hosts},{_railway_domain}"
+
 ALLOWED_HOSTS = env_list(
     "DJANGO_ALLOWED_HOSTS",
     "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1,*,0.0.0.0,rslbackend-production.up.railway.app",
+    default=_default_hosts,
 )
 
 INSTALLED_APPS = [
@@ -113,13 +118,15 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-DB_LIVE = env_bool("DB_LIVE", default=False)
 DATABASE_URL = env("DATABASE_URL")
 
-if DB_LIVE and DATABASE_URL:
+# Railway (and most PaaS) inject DATABASE_URL — use it whenever present.
+if DATABASE_URL:
     import dj_database_url
 
-    DATABASES = {"default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
+    DATABASES = {
+        "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600),
+    }
 else:
     DATABASES = {
         "default": {

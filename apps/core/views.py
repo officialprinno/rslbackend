@@ -1,5 +1,6 @@
 """Core API views."""
 
+from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -8,6 +9,11 @@ from apps.core.models import AuditLog, Currency
 from apps.core.multi_dept_dashboard import build_multi_department_dashboard
 from apps.core.responses import api_response
 from apps.core.serializers import AuditLogSerializer, CurrencySerializer
+
+
+def health_check(_request):
+    """Lightweight liveness probe for Railway / load balancers."""
+    return JsonResponse({"status": "ok", "service": "rsl-fms-api"})
 
 
 class CurrencyViewSet(viewsets.ModelViewSet):
